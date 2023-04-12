@@ -6,19 +6,25 @@ import cv2
 import pandas as pd
 import re
 
-# Globals
-PATH = "C:/Users/alder/Documents/Coding/New Fern Code/MariaFernPhotos"  # Data Directory
-COLOR_LOWER = (20, 40, 40)  # Lower hsv threshold
-COLOR_UPPER = (70, 255, 255) # Upper hsv threshold
-VISUALLY_VERIFY = True  # If you want to verify the code is working
-VERIFY_PATH = "C:/Users/alder/Documents/Coding/New Fern Code/Verify"  # Output Verification
-CSV_FILE_NAME = "fern_data.csv"  # Output for dataframe
-COLOR_LOWER2 = (20, 80, 60)  # Threshold that is HARD CODED for the 5wk set.
+# To Arparse
+PATH = "C:/Users/alder/Documents/College/Job/Ferns_and_Fungi/data"  # Data Directory
+CSV_FILE_NAME = "C:/Users/alder/Documents/College/Job/Ferns_and_Fungi/results/fern_data.csv"  # Output for dataframe
+VERIFY_PATH =   "C:/Users/alder/Documents/College/Job/Ferns_and_Fungi/results/verify"  # Output Verification
 
-# The code uses the first captured section of regex 
-DATE_REGEX = "^([^_]*)_"
-GROUP_REGEX = "_(.*)[_-]"
-REPLICATE_REGEX = "([0-9]*)\.png"
+PATH = os.path.realpath(PATH)
+CSV_FILE_NAME = os.path.realpath(CSV_FILE_NAME)
+VERIFY_PATH = os.path.realpath(VERIFY_PATH)
+
+# Configuration
+from configuration import parameters
+COLOR_LOWER = parameters["color_lower"] 
+COLOR_UPPER = parameters["color_upper"]
+
+VISUALLY_VERIFY = parameters["visually_verify"] 
+
+DATE_REGEX = parameters["date_regex"]
+GROUP_REGEX = parameters["group_regex"]
+REPLICATE_REGEX = parameters["replicate_regex"]
 
 ID, Date, Group, Replicate, coverage_percent = [], [], [], [], []
 for file in os.listdir(PATH):
@@ -30,21 +36,23 @@ for file in os.listdir(PATH):
         img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
         img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
         
-        
         # Gather the data
         ID.append(file)
         Date.append(re.search(DATE_REGEX, file)[1])
         Group.append(re.search(GROUP_REGEX, file)[1])
         Replicate.append(re.search(REPLICATE_REGEX, file)[1])
 
-        # Hardcoded Special Case
-        if Date[-1] == "5wk":
-            green_mask = cv2.inRange(img_hsv, COLOR_LOWER2, COLOR_UPPER)
-        else:
-            green_mask = cv2.inRange(img_hsv, COLOR_LOWER, COLOR_UPPER)
+        # Actual thresholding + special cases
+        lower = COLOR_LOWER
+        upper = COLOR_UPPER
+        for special_case in parameters["special_cases"]:
+            if re.search(special_case[0], file)[1] == special_case[1]:
+                lower = special_case[2]
+                upper = special_case[3]
+        green_mask = cv2.inRange(img_hsv, lower, upper)
         black_mask = cv2.inRange(img_rgb, (0,0,0), (0,0,0))
 
-        
+        # Calculating percent covered
         coverage_percent.append(100 * np.sum(green_mask/255) / np.sum(np.invert(black_mask)/255))
         
         # Visually Verify 
