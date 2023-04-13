@@ -13,12 +13,17 @@ parameters["date_regex"] = "^([^_]*)_"
 parameters["group_regex"] = "_(.*)[_-]"
 parameters["replicate_regex"] = "([0-9]*)\.png"
 
+parameters["collections"] = {
+    "Date" : "^([^_]*)_",
+    "Group" : "_(.*)[_-]",
+    "Replicate" : "([0-9]*)\.png"
+}
 # Handling for special cases
 # Formatted like the following:
 # if re.search(tuple[0], filename) == tuple[1]):
 #      lower = tuple[2]
 #      upper = tuple[3]
 parameters["special_cases"] = [
-            ("^([^_]*)_", "5wk", (20, 80, 60), (70, 255, 255))
-        ]
+    ("^([^_]*)_", "5wk", (20, 80, 60), (70, 255, 255))
+]
 

@@ -6,6 +6,9 @@ import cv2
 import pandas as pd
 import re
 import argparse
+# TODO: Implement warnings
+# import warnings
+# warnings.warn("Warning...........Message")
 
 # Paths
 parser = argparse.ArgumentParser(description="")
@@ -13,10 +16,6 @@ parser.add_argument("ImagesPath", type=str, help="Folder containing all the fern
 parser.add_argument("CsvPath", type=str, help="Path and name of the output csv file.")
 parser.add_argument("VerifyPath", type=str, help="Folder, preferably empty, meant to contain the outputs for visual verification.")
 args = parser.parse_args()
-
-# PATH = "C:/Users/alder/Documents/College/Job/Ferns_and_Fungi/data"  # Data Directory
-# CSV_FILE_NAME = "C:/Users/alder/Documents/College/Job/Ferns_and_Fungi/results/fern_data.csv"  # Output for dataframe
-# VERIFY_PATH =   "C:/Users/alder/Documents/College/Job/Ferns_and_Fungi/results/verify"  # Output Verification
 
 PATH = os.path.realpath(args.ImagesPath)
 CSV_FILE_NAME = os.path.realpath(args.CsvPath)
@@ -26,14 +25,11 @@ VERIFY_PATH = os.path.realpath(args.VerifyPath)
 from configuration import parameters
 COLOR_LOWER = parameters["color_lower"] 
 COLOR_UPPER = parameters["color_upper"]
-
 VISUALLY_VERIFY = parameters["visually_verify"] 
+COLLECTIONS = parameters["collections"]
+SPECIAL_CASES = parameters["special_cases"]
 
-DATE_REGEX = parameters["date_regex"]
-GROUP_REGEX = parameters["group_regex"]
-REPLICATE_REGEX = parameters["replicate_regex"]
-
-ID, Date, Group, Replicate, coverage_percent = [], [], [], [], []
+data_collector = {"% Fern Coverage" : []}
 for file in os.listdir(PATH):
     if file[-4:] == ".png":
         img_file = os.path.join(PATH, file)
@@ -44,15 +40,15 @@ for file in os.listdir(PATH):
         img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
         
         # Gather the data
-        ID.append(file)
-        Date.append(re.search(DATE_REGEX, file)[1])
-        Group.append(re.search(GROUP_REGEX, file)[1])
-        Replicate.append(re.search(REPLICATE_REGEX, file)[1])
+        for collector in COLLECTIONS:
+            if collector not in data_collector:
+                data_collector[collector] = []
+            data_collector[collector].append(re.search(COLLECTIONS[collector], file)[1])
 
         # Actual thresholding + special cases
         lower = COLOR_LOWER
         upper = COLOR_UPPER
-        for special_case in parameters["special_cases"]:
+        for special_case in SPECIAL_CASES:
             if re.search(special_case[0], file)[1] == special_case[1]:
                 lower = special_case[2]
                 upper = special_case[3]
@@ -60,7 +56,7 @@ for file in os.listdir(PATH):
         black_mask = cv2.inRange(img_rgb, (0,0,0), (0,0,0))
 
         # Calculating percent covered
-        coverage_percent.append(100 * np.sum(green_mask/255) / np.sum(np.invert(black_mask)/255))
+        data_collector["% Fern Coverage"].append(100 * np.sum(green_mask/255) / np.sum(np.invert(black_mask)/255))
         
         # Visually Verify 
         if VISUALLY_VERIFY:
@@ -88,9 +84,5 @@ for file in os.listdir(PATH):
         
         
 # Convert the information into a dataframe.
-data = pd.DataFrame({"ID":ID,
-                      "Date":Date,
-                      "Group":Group,
-                      "Replicate":Replicate,
-                      "% Fern Coverage":coverage_percent})
+data = pd.DataFrame(data_collector)
 data.to_csv(CSV_FILE_NAME, index=False)
