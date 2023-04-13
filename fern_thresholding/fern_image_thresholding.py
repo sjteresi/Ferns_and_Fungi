@@ -29,7 +29,7 @@ VISUALLY_VERIFY = parameters["visually_verify"]
 COLLECTIONS = parameters["collections"]
 SPECIAL_CASES = parameters["special_cases"]
 
-data_collector = {"% Fern Coverage" : []}
+data_collector = {}
 for file in os.listdir(PATH):
     if file[-4:] == ".png":
         img_file = os.path.join(PATH, file)
@@ -56,6 +56,8 @@ for file in os.listdir(PATH):
         black_mask = cv2.inRange(img_rgb, (0,0,0), (0,0,0))
 
         # Calculating percent covered
+        if "% Fern Coverage" not in data_collector:
+            data_collector["% Fern Coverage"] = []
         data_collector["% Fern Coverage"].append(100 * np.sum(green_mask/255) / np.sum(np.invert(black_mask)/255))
         
         # Visually Verify 

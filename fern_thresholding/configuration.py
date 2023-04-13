@@ -14,6 +14,7 @@ parameters["group_regex"] = "_(.*)[_-]"
 parameters["replicate_regex"] = "([0-9]*)\.png"
 
 parameters["collections"] = {
+    "ID" : "^(.*)\.png",
     "Date" : "^([^_]*)_",
     "Group" : "_(.*)[_-]",
     "Replicate" : "([0-9]*)\.png"
