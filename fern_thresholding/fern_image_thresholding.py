@@ -6,9 +6,7 @@ import cv2
 import pandas as pd
 import re
 import argparse
-# TODO: Implement warnings
-# import warnings
-# warnings.warn("Warning...........Message")
+import warnings
 
 # Paths
 parser = argparse.ArgumentParser(description="")
@@ -48,10 +46,17 @@ for file in os.listdir(PATH):
         # Actual thresholding + special cases
         lower = COLOR_LOWER
         upper = COLOR_UPPER
+        special = False
         for special_case in SPECIAL_CASES:
             if re.search(special_case[0], file)[1] == special_case[1]:
-                lower = special_case[2]
-                upper = special_case[3]
+                if special:
+                    warnings.warn("\n\nWarning...........You have multiple special cases that can apply to" +
+                                  file + " The top most special case will be applied.\n")
+                else:
+                    special=True
+                    lower = special_case[2]
+                    upper = special_case[3]
+                    
         green_mask = cv2.inRange(img_hsv, lower, upper)
         black_mask = cv2.inRange(img_rgb, (0,0,0), (0,0,0))
 
