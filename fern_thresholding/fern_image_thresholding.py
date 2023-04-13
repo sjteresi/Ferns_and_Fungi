@@ -65,12 +65,8 @@ for file in os.listdir(PATH):
 
             # This code generates three side by side pictures 
             # demonstrating what the computer sees.
-
-            temp_img = img_rgb.copy()
-            result1 = cv2.bitwise_and(temp_img, temp_img, mask=np.invert(green_mask))
-
-            temp_img = img_rgb.copy()
-            result2 = cv2.bitwise_and(temp_img, temp_img, mask=green_mask)
+            result1 = cv2.bitwise_and(img_rgb, img_rgb, mask=np.invert(green_mask))
+            result2 = cv2.bitwise_and(img_rgb, img_rgb, mask=green_mask)
 
             fig, axs = plt.subplots(1, 3, figsize=(15,5))
             axs[0].imshow(img_rgb)
