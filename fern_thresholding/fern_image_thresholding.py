@@ -5,15 +5,22 @@ import matplotlib.pyplot as plt
 import cv2
 import pandas as pd
 import re
+import argparse
 
-# To Arparse
-PATH = "C:/Users/alder/Documents/College/Job/Ferns_and_Fungi/data"  # Data Directory
-CSV_FILE_NAME = "C:/Users/alder/Documents/College/Job/Ferns_and_Fungi/results/fern_data.csv"  # Output for dataframe
-VERIFY_PATH =   "C:/Users/alder/Documents/College/Job/Ferns_and_Fungi/results/verify"  # Output Verification
+# Paths
+parser = argparse.ArgumentParser(description="")
+parser.add_argument("ImagesPath", type=str, help="Folder containing all the fern images.")
+parser.add_argument("CsvPath", type=str, help="Path and name of the output csv file.")
+parser.add_argument("VerifyPath", type=str, help="Folder, preferably empty, meant to contain the outputs for visual verification.")
+args = parser.parse_args()
 
-PATH = os.path.realpath(PATH)
-CSV_FILE_NAME = os.path.realpath(CSV_FILE_NAME)
-VERIFY_PATH = os.path.realpath(VERIFY_PATH)
+# PATH = "C:/Users/alder/Documents/College/Job/Ferns_and_Fungi/data"  # Data Directory
+# CSV_FILE_NAME = "C:/Users/alder/Documents/College/Job/Ferns_and_Fungi/results/fern_data.csv"  # Output for dataframe
+# VERIFY_PATH =   "C:/Users/alder/Documents/College/Job/Ferns_and_Fungi/results/verify"  # Output Verification
+
+PATH = os.path.realpath(args.ImagesPath)
+CSV_FILE_NAME = os.path.realpath(args.CsvPath)
+VERIFY_PATH = os.path.realpath(args.VerifyPath)
 
 # Configuration
 from configuration import parameters
