@@ -66,11 +66,11 @@ def collect_data(color_lower, color_upper, collections, special_cases, visually_
 
             # Visually Verify 
             if visually_verify:
-                verify_visually(file, img_rgb, green_mask)
+                verify_visually(file, img_rgb, green_mask, black_mask)
                 
     return data_collector
 
-def verify_visually(file, img_rgb, green_mask):
+def verify_visually(file, img_rgb, green_mask, black_mask):
     """
     This code generates three side by side pictures demonstrating what the computer sees.
     """
@@ -81,10 +81,15 @@ def verify_visually(file, img_rgb, green_mask):
     result1 = cv2.bitwise_and(img_rgb, img_rgb, mask=np.invert(green_mask))
     result2 = cv2.bitwise_and(img_rgb, img_rgb, mask=green_mask)
 
-    fig, axs = plt.subplots(1, 3, figsize=(15,5))
+    fig, axs = plt.subplots(1, 4, figsize=(20,5))
+    axs[0].set_title("Original Image")
     axs[0].imshow(img_rgb)
+    axs[1].set_title("Look for what doesn't get\npicked up that should")
     axs[1].imshow(result1)
+    axs[2].set_title("Look for what does get\npicked up that shouldn't")
     axs[2].imshow(result2)
+    axs[3].set_title("Look for what is removed\nthat shouldn't")
+    axs[3].imshow(np.invert(black_mask), cmap="gray")
     for ax in axs:
         ax.xaxis.set_visible(False)
         ax.yaxis.set_visible(False)
