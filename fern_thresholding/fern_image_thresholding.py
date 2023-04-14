@@ -11,7 +11,18 @@ import warnings
 # Configuration
 from configuration import parameters
 
-def collect_data(color_lower, color_upper, visually_verify, collections, special_cases, PATH):
+def collect_data(color_lower, color_upper, collections, special_cases, visually_verify):
+    """
+    Args:
+        color_lower, color_upper : The default lower and upper color thresholds. 
+            Format is (#,#,#)
+        collections : The columns to collect from the file name. 
+            Format is {column_name : regex with 1 capturing group, ...}
+        special_cases : The cases to use a differen lower and upper threshold for.
+            Format is [(regex with 1 capturing group, what that capturing group should equal, new lower, new upper), ...]
+        visually_verify : The boolean for if you want to visually confirm that the computer is seeing what it should be.
+                          Very useful for manually tuning the color_lower, color_upper, and special cases.
+    """
     data_collector = {}
     for file in os.listdir(PATH):
         if file[-4:] == ".png":
@@ -52,24 +63,28 @@ def collect_data(color_lower, color_upper, visually_verify, collections, special
 
             # Visually Verify 
             if visually_verify:
-                new_file_name = file[:-4] + "_verify" + file[-4:]
-                new_file_path = os.path.join(VERIFY_PATH, new_file_name)
-
-                # This code generates three side by side pictures 
-                # demonstrating what the computer sees.
-                result1 = cv2.bitwise_and(img_rgb, img_rgb, mask=np.invert(green_mask))
-                result2 = cv2.bitwise_and(img_rgb, img_rgb, mask=green_mask)
-
-                fig, axs = plt.subplots(1, 3, figsize=(15,5))
-                axs[0].imshow(img_rgb)
-                axs[1].imshow(result1)
-                axs[2].imshow(result2)
-                for ax in axs:
-                    ax.xaxis.set_visible(False)
-                    ax.yaxis.set_visible(False)
-                fig.savefig(new_file_path, dpi=300)
-                plt.close(fig)
+                verify_visually(file, img_rgb, green_mask)
+                
     return data_collector
+
+def verify_visually(file, img_rgb, green_mask):
+    new_file_name = file[:-4] + "_verify" + file[-4:]
+    new_file_path = os.path.join(VERIFY_PATH, new_file_name)
+
+    # This code generates three side by side pictures 
+    # demonstrating what the computer sees.
+    result1 = cv2.bitwise_and(img_rgb, img_rgb, mask=np.invert(green_mask))
+    result2 = cv2.bitwise_and(img_rgb, img_rgb, mask=green_mask)
+
+    fig, axs = plt.subplots(1, 3, figsize=(15,5))
+    axs[0].imshow(img_rgb)
+    axs[1].imshow(result1)
+    axs[2].imshow(result2)
+    for ax in axs:
+        ax.xaxis.set_visible(False)
+        ax.yaxis.set_visible(False)
+    fig.savefig(new_file_path, dpi=300)
+    plt.close(fig)
 
 if __name__ == "__main__":
     # Paths
@@ -79,7 +94,8 @@ if __name__ == "__main__":
     parser.add_argument("VerifyPath", type=str, help="Folder, preferably empty, meant to contain the outputs for visual verification.")
     args = parser.parse_args()
     
-    parameters["PATH"] = os.path.realpath(args.ImagesPath)
+    # Globals
+    PATH = os.path.realpath(args.ImagesPath)
     CSV_FILE_NAME = os.path.realpath(args.CsvPath)
     VERIFY_PATH = os.path.realpath(args.VerifyPath)
     
