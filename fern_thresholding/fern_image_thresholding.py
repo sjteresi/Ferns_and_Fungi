@@ -8,22 +8,10 @@ import re
 import argparse
 import warnings
 
-# Paths
-parser = argparse.ArgumentParser(description="")
-parser.add_argument("ImagesPath", type=str, help="Folder containing all the fern images.")
-parser.add_argument("CsvPath", type=str, help="Path and name of the output csv file.")
-parser.add_argument("VerifyPath", type=str, help="Folder, preferably empty, meant to contain the outputs for visual verification.")
-args = parser.parse_args()
-
-PATH = os.path.realpath(args.ImagesPath)
-CSV_FILE_NAME = os.path.realpath(args.CsvPath)
-VERIFY_PATH = os.path.realpath(args.VerifyPath)
-
 # Configuration
 from configuration import parameters
 
-
-def collect_data(color_lower, color_upper, visually_verify, collections, special_cases, PATH=PATH):
+def collect_data(color_lower, color_upper, visually_verify, collections, special_cases, PATH):
     data_collector = {}
     for file in os.listdir(PATH):
         if file[-4:] == ".png":
@@ -82,8 +70,19 @@ def collect_data(color_lower, color_upper, visually_verify, collections, special
                 fig.savefig(new_file_path, dpi=300)
                 plt.close(fig)
     return data_collector
-        
-        
-# Convert the information into a dataframe.
-data = pd.DataFrame(collect_data(**parameters))
-data.to_csv(CSV_FILE_NAME, index=False)
+
+if __name__ == "__main__":
+    # Paths
+    parser = argparse.ArgumentParser(description="")
+    parser.add_argument("ImagesPath", type=str, help="Folder containing all the fern images.")
+    parser.add_argument("CsvPath", type=str, help="Path and name of the output csv file.")
+    parser.add_argument("VerifyPath", type=str, help="Folder, preferably empty, meant to contain the outputs for visual verification.")
+    args = parser.parse_args()
+    
+    parameters["PATH"] = os.path.realpath(args.ImagesPath)
+    CSV_FILE_NAME = os.path.realpath(args.CsvPath)
+    VERIFY_PATH = os.path.realpath(args.VerifyPath)
+    
+    # Convert the information into a dataframe.
+    data = pd.DataFrame(collect_data(**parameters))
+    data.to_csv(CSV_FILE_NAME, index=False) 
