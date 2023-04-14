@@ -21,11 +21,7 @@ VERIFY_PATH = os.path.realpath(args.VerifyPath)
 
 # Configuration
 from configuration import parameters
-COLOR_LOWER = parameters["color_lower"] 
-COLOR_UPPER = parameters["color_upper"]
-VISUALLY_VERIFY = parameters["visually_verify"] 
-COLLECTIONS = parameters["collections"]
-SPECIAL_CASES = parameters["special_cases"]
+
 
 def collect_data(color_lower, color_upper, visually_verify, collections, special_cases, PATH=PATH):
     data_collector = {}
