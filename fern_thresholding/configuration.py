@@ -8,11 +8,6 @@ parameters["color_upper"] = (70, 255, 255)
 parameters["visually_verify"] = True
 
 # Regular expressions to catch file names
-# TODO: Replace this with a list of arbitrary length formated like : [("label", regex)]
-parameters["date_regex"] = "^([^_]*)_"
-parameters["group_regex"] = "_(.*)[_-]"
-parameters["replicate_regex"] = "([0-9]*)\.png"
-
 parameters["collections"] = {
     "ID" : "^(.*)\.png",
     "Date" : "^([^_]*)_",

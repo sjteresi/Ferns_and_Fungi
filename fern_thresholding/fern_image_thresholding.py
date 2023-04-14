@@ -27,7 +27,7 @@ VISUALLY_VERIFY = parameters["visually_verify"]
 COLLECTIONS = parameters["collections"]
 SPECIAL_CASES = parameters["special_cases"]
 
-def collect_data():
+def collect_data(color_lower, color_upper, visually_verify, collections, special_cases, PATH=PATH):
     data_collector = {}
     for file in os.listdir(PATH):
         if file[-4:] == ".png":
@@ -39,16 +39,16 @@ def collect_data():
             img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
 
             # Gather the data
-            for collector in COLLECTIONS:
+            for collector in collections:
                 if collector not in data_collector:
                     data_collector[collector] = []
-                data_collector[collector].append(re.search(COLLECTIONS[collector], file)[1])
+                data_collector[collector].append(re.search(collections[collector], file)[1])
 
             # Actual thresholding + special cases
-            lower = COLOR_LOWER
-            upper = COLOR_UPPER
+            lower = color_lower
+            upper = color_upper
             special = False
-            for special_case in SPECIAL_CASES:
+            for special_case in special_cases:
                 if re.search(special_case[0], file)[1] == special_case[1]:
                     if special:
                         warnings.warn("\n\nWarning...........You have multiple special cases that can apply to" +
@@ -67,7 +67,7 @@ def collect_data():
             data_collector["% Fern Coverage"].append(100 * np.sum(green_mask/255) / np.sum(np.invert(black_mask)/255))
 
             # Visually Verify 
-            if VISUALLY_VERIFY:
+            if visually_verify:
                 new_file_name = file[:-4] + "_verify" + file[-4:]
                 new_file_path = os.path.join(VERIFY_PATH, new_file_name)
 
@@ -89,5 +89,5 @@ def collect_data():
         
         
 # Convert the information into a dataframe.
-data = pd.DataFrame(collect_data())
+data = pd.DataFrame(collect_data(**parameters))
 data.to_csv(CSV_FILE_NAME, index=False)
