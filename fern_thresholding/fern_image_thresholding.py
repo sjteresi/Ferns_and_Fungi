@@ -22,6 +22,9 @@ def collect_data(color_lower, color_upper, collections, special_cases, visually_
             Format is [(regex with 1 capturing group, what that capturing group should equal, new lower, new upper), ...]
         visually_verify : The boolean for if you want to visually confirm that the computer is seeing what it should be.
                           Very useful for manually tuning the color_lower, color_upper, and special cases.
+    Output:
+        A dictionary containing all of the values from collections as well as the % fern coverage value.
+        This dictionary is meant to be converted into a pandas dataframe.
     """
     data_collector = {}
     for file in os.listdir(PATH):
@@ -68,11 +71,13 @@ def collect_data(color_lower, color_upper, collections, special_cases, visually_
     return data_collector
 
 def verify_visually(file, img_rgb, green_mask):
+    """
+    This code generates three side by side pictures demonstrating what the computer sees.
+    """
     new_file_name = file[:-4] + "_verify" + file[-4:]
     new_file_path = os.path.join(VERIFY_PATH, new_file_name)
 
-    # This code generates three side by side pictures 
-    # demonstrating what the computer sees.
+    
     result1 = cv2.bitwise_and(img_rgb, img_rgb, mask=np.invert(green_mask))
     result2 = cv2.bitwise_and(img_rgb, img_rgb, mask=green_mask)
 
