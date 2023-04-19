@@ -9,7 +9,27 @@ import argparse
 import warnings
 
 # Configuration
-from configuration import parameters
+import configparser
+from ast import literal_eval
+
+def parse_configuration():
+    # TODO: Add configuration path as an argparse option.
+    config = configparser.ConfigParser()
+    config.read('configuration.ini')
+    
+    special_cases = []
+    for item in config.items('Special Cases'):
+        special_cases.append(literal_eval(item[1]))
+    parameters = {
+        "color_lower" : tuple(map(int, config.get('Color', 'color_lower').split(','))),
+        "color_upper" : tuple(map(int, config.get('Color', 'color_upper').split(','))),
+        "visually_verify" : config.getboolean('Output', 'visually_verify'),
+        "collections" : dict(config.items('Collections')),
+        "special_cases" : special_cases
+    }
+    return parameters
+    
+# from configuration import parameters
 
 def collect_data(color_lower, color_upper, collections, special_cases, visually_verify):
     """
@@ -108,6 +128,9 @@ if __name__ == "__main__":
     PATH = os.path.realpath(args.ImagesPath)
     CSV_FILE_NAME = os.path.realpath(args.CsvPath)
     VERIFY_PATH = os.path.realpath(args.VerifyPath)
+    
+    # Configuration
+    parameters = parse_configuration()
     
     # Convert the information into a dataframe.
     data = pd.DataFrame(collect_data(**parameters))
