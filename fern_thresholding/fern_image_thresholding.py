@@ -13,7 +13,7 @@ from ast import literal_eval
 
 def parse_configuration():
     config = configparser.ConfigParser()
-    config.read('updated_configuration.ini')
+    config.read(CONFIGURATION)
     
     cases = []
     for case in config.items("Cases"):
@@ -122,12 +122,14 @@ if __name__ == "__main__":
     parser.add_argument("ImagesPath", type=str, help="Folder containing all the fern images.")
     parser.add_argument("CsvPath", type=str, help="Path and name of the output csv file.")
     parser.add_argument("VerifyPath", type=str, help="Folder, preferably empty, meant to contain the outputs for visual verification.")
+    parser.add_argument("Configuration", type=str, help="Path to the configuration file.")
     args = parser.parse_args()
     
     # Globals
     PATH = os.path.realpath(args.ImagesPath)
     CSV_FILE_NAME = os.path.realpath(args.CsvPath)
     VERIFY_PATH = os.path.realpath(args.VerifyPath)
+    CONFIGURATION = os.path.realpath(args.Configuration)
     
     # Configuration
     parameters = parse_configuration()
