@@ -6,116 +6,116 @@ import cv2
 import pandas as pd
 import re
 import argparse
-import warnings
 
 # Configuration
 import configparser
 from ast import literal_eval
 
 def parse_configuration():
-    # TODO: Add configuration path as an argparse option.
     config = configparser.ConfigParser()
-    config.read('configuration.ini')
+    config.read('updated_configuration.ini')
     
-    special_cases = []
-    for item in config.items('Special Cases'):
-        special_cases.append(literal_eval(item[1]))
+    cases = []
+    for case in config.items("Cases"):
+        cases.append(literal_eval(case[1]))
+        
     parameters = {
-        "color_lower" : tuple(map(int, config.get('Color', 'color_lower').split(','))),
-        "color_upper" : tuple(map(int, config.get('Color', 'color_upper').split(','))),
-        "visually_verify" : config.getboolean('Output', 'visually_verify'),
-        "collections" : dict(config.items('Collections')),
-        "special_cases" : special_cases
+        "visually_verify": config.getboolean('Output', 'visually_verify'),
+        "collections": dict(config.items('Collections')),
+        "cases": cases,
+        "file_extension": config.get("Input", "file_extension"),
+        "capturing_name": config.get("Output", "capturing_name"),
     }
     return parameters
-    
-# from configuration import parameters
 
-def collect_data(color_lower, color_upper, collections, special_cases, visually_verify):
+def collect_data(cases, collections, visually_verify, file_extension, capturing_name):
     """
     Args:
-        color_lower, color_upper : The default lower and upper color thresholds. 
-            Format is (#,#,#)
-        collections : The columns to collect from the file name. 
+        cases: A list of dictionaries of the following structure.
+            {'regex': '(regex with 1 capturing group)',
+             'equals': 'what the regex should equal',
+             'color_lower': (#,#,#) the lower bound of the hsv colors to pick out,
+             'color_upper': (#,#,#) the upper bound of the hsv colors to pick out,
+             'normalize_lower': (#,#,#) the lower hsv bound for the normalizing region,
+             'normalize_upper': (#,#,#) the upper hsv bound for the normalizing region,
+             'normalize_area' : # the area of the normalizing region.}
+        collections: The columns to collect from the file name. 
             Format is {column_name : regex with 1 capturing group, ...}
-        special_cases : The cases to use a differen lower and upper threshold for.
-            Format is [(regex with 1 capturing group, what that capturing group should equal, new lower, new upper), ...]
         visually_verify : The boolean for if you want to visually confirm that the computer is seeing what it should be.
-                          Very useful for manually tuning the color_lower, color_upper, and special cases.
-    Output:
-        A dictionary containing all of the values from collections as well as the % fern coverage value.
-        This dictionary is meant to be converted into a pandas dataframe.
+            Very useful for manually tuning the color_lower, color_upper.
+        file_extension : The file extension for the images.
+        capturing_name : The name of the column that has the substantive data.
+     Output:
+        A dictionary containing all of the values from collections as well as the coverage value in terms of the normalizing region.
+        This dictionary is intended to be converted into a pandas dataframe.
     """
     data_collector = {}
     for file in os.listdir(PATH):
-        if file[-4:] == ".png":
+        if file[-len(file_extension):] == file_extension:
             img_file = os.path.join(PATH, file)
             img_bgr = cv2.imread(img_file)
-
+            
             # Transform each image to RGB and HSV types.
             img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
             img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
-
+            
             # Gather the data
             for collector in collections:
                 if collector not in data_collector:
                     data_collector[collector] = []
                 data_collector[collector].append(re.search(collections[collector], file)[1])
-
-            # Actual thresholding + special cases
-            lower = color_lower
-            upper = color_upper
-            special = False
-            for special_case in special_cases:
-                if re.search(special_case[0], file)[1] == special_case[1]:
-                    if special:
-                        warnings.warn("\n\nWarning...........You have multiple special cases that can apply to" +
-                                      file + " The top most special case will be applied.\n")
-                    else:
-                        special=True
-                        lower = special_case[2]
-                        upper = special_case[3]
-
-            green_mask = cv2.inRange(img_hsv, lower, upper)
-            black_mask = cv2.inRange(img_rgb, (0,0,0), (0,0,0))
-
-            # Calculating percent covered
-            if "% Fern Coverage" not in data_collector:
-                data_collector["% Fern Coverage"] = []
-            data_collector["% Fern Coverage"].append(100 * np.sum(green_mask/255) / np.sum(np.invert(black_mask)/255))
-
+            
+            # Determine which case is applied.
+            c = cases[0]  # The first is the default, and is overwritten by future cases.
+            for case in cases[1:]:
+                if re.search(case["regex"], file)[1] == case["equals"]:
+                    c = case
+                    
+            # Create masks
+            collected_mask, normalize_mask = get_masks(img_hsv, c["color_lower"], c["color_upper"],
+                                                       c["normalize_lower"], c["normalize_upper"],)
+            
+            # Calculate coverage
+            if capturing_name not in data_collector:
+                data_collector[capturing_name] = []
+            data_collector[capturing_name].append(np.sum(collected_mask) / np.sum(normalize_mask) * case["normalize_area"])
+               
             # Visually Verify 
             if visually_verify:
-                verify_visually(file, img_rgb, green_mask, black_mask)
+                verify_visually(file, img_rgb, collected_mask, normalize_mask, file_extension)
                 
     return data_collector
-
-def verify_visually(file, img_rgb, green_mask, black_mask):
+    
+def get_masks(img, color_lower, color_upper, normalize_lower, normalize_upper):
+    collected_mask = cv2.inRange(img, color_lower, color_upper)
+    normalize_mask = cv2.inRange(img, normalize_lower, normalize_upper)
+    return (collected_mask, normalize_mask)
+    
+def verify_visually(file, img_rgb, captured_mask, normalize_mask, file_extension):
     """
     This code generates three side by side pictures demonstrating what the computer sees.
     """
-    new_file_name = file[:-4] + "_verify" + file[-4:]
+    new_file_name = file[:-len(file_extension)] + "_verify" + file_extension
     new_file_path = os.path.join(VERIFY_PATH, new_file_name)
 
-    
-    result1 = cv2.bitwise_and(img_rgb, img_rgb, mask=np.invert(green_mask))
-    result2 = cv2.bitwise_and(img_rgb, img_rgb, mask=green_mask)
+    result1 = cv2.bitwise_and(img_rgb, img_rgb, mask=np.invert(captured_mask))
+    result2 = cv2.bitwise_and(img_rgb, img_rgb, mask=captured_mask)
 
     fig, axs = plt.subplots(1, 4, figsize=(20,5))
     axs[0].set_title("Original Image")
     axs[0].imshow(img_rgb)
-    axs[1].set_title("Look for what doesn't get\npicked up that should")
+    axs[1].set_title("Capturing Region")
     axs[1].imshow(result1)
-    axs[2].set_title("Look for what does get\npicked up that shouldn't")
+    axs[2].set_title("Capturing Region")
     axs[2].imshow(result2)
-    axs[3].set_title("Look for what is removed\nthat shouldn't")
-    axs[3].imshow(np.invert(black_mask), cmap="gray")
+    axs[3].set_title("Normalizing Region")
+    axs[3].imshow(normalize_mask, cmap="gray")
     for ax in axs:
         ax.xaxis.set_visible(False)
         ax.yaxis.set_visible(False)
     fig.savefig(new_file_path, dpi=300)
     plt.close(fig)
-
+    
 if __name__ == "__main__":
     # Paths
     parser = argparse.ArgumentParser(description="")
@@ -135,3 +135,16 @@ if __name__ == "__main__":
     # Convert the information into a dataframe.
     data = pd.DataFrame(collect_data(**parameters))
     data.to_csv(CSV_FILE_NAME, index=False) 
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
