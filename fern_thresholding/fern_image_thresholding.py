@@ -25,10 +25,11 @@ def parse_configuration():
         "cases": cases,
         "file_extension": config.get("Input", "file_extension"),
         "capturing_name": config.get("Output", "capturing_name"),
+        "normalize_unit": config.get("Output", "normalize_unit")
     }
     return parameters
 
-def collect_data(cases, collections, visually_verify, file_extension, capturing_name):
+def collect_data(cases, collections, visually_verify, file_extension, capturing_name, normalize_unit):
     """
     Args:
         cases: A list of dictionaries of the following structure.
@@ -49,6 +50,7 @@ def collect_data(cases, collections, visually_verify, file_extension, capturing_
         A dictionary containing all of the values from collections as well as the coverage value in terms of the normalizing region.
         This dictionary is intended to be converted into a pandas dataframe.
     """
+    capturing_name += " (" + normalize_unit + ")"
     data_collector = {}
     for file in os.listdir(PATH):
         if file[-len(file_extension):] == file_extension:
