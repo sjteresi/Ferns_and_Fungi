@@ -80,7 +80,7 @@ Examples:
 * `^(.*).png`
     * Captures everything from the start of the filename all the way to just before the extension.
     * The regex will break the code if it sees a filename that does not have .png in it.
-    * This gives the ID. This is a column for the soul purpose of having the filename on hand to help the user find the file in case that datapoint is particular interesting.
+    * This gives the ID. This is a column for the sole purpose of having the filename on hand to help the user find the file in case that datapoint is particular interesting.
 *  `^([^_]*)_`
     * Captures everything from the start of a filename to just before the first underscore.
     * In the example code this is the date.
