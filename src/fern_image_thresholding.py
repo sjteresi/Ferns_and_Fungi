@@ -1,3 +1,11 @@
+"""
+Author: Alder Fulton
+Usage: fern_image_threshold.py /imagespath /csvpath.csv /verifypath /configurationpath.ini
+
+This python script thresholds a region in the images given and then normalizes based on another region.
+The goal is to find the area of the region.
+"""
+
 # Imports
 import numpy as np
 import os
@@ -12,6 +20,10 @@ import configparser
 from ast import literal_eval
 
 def parse_configuration():
+    """
+    Parses the configuration file into a single dictionary to be used as key word arguments (kwargs)
+    for the function "collect_data"
+    """
     config = configparser.ConfigParser()
     config.read(CONFIGURATION)
     
@@ -89,6 +101,10 @@ def collect_data(cases, collections, visually_verify, file_extension, capturing_
     return data_collector
     
 def get_masks(img, color_lower, color_upper, normalize_lower, normalize_upper):
+    """
+    Uses the lower and upper thresholds to find the regions for both the capturing region
+    and the normalizing region.
+    """
     collected_mask = cv2.inRange(img, color_lower, color_upper)
     normalize_mask = cv2.inRange(img, normalize_lower, normalize_upper)
     return (collected_mask, normalize_mask)
@@ -140,15 +156,4 @@ if __name__ == "__main__":
     data = pd.DataFrame(collect_data(**parameters))
     data.to_csv(CSV_FILE_NAME, index=False) 
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
