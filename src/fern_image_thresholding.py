@@ -92,7 +92,7 @@ def collect_data(cases, collections, visually_verify, file_extension, capturing_
             # Calculate coverage
             if capturing_name not in data_collector:
                 data_collector[capturing_name] = []
-            data_collector[capturing_name].append(np.sum(collected_mask) / np.sum(normalize_mask) * case["normalize_area"])
+            data_collector[capturing_name].append(np.sum(collected_mask) / np.sum(normalize_mask) * c["normalize_area"])
                
             # Visually Verify 
             if visually_verify:
